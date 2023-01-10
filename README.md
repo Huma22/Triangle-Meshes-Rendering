@@ -1,4 +1,4 @@
-# CS425 - Computer Graphics I (Spring 2022)
+#Computer Graphics
 
 ## *HOW TO RUN* ##
 
