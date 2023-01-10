@@ -11,9 +11,10 @@ in vec3 normal;
 out vec4 vColor;
 
 void main() {
-    vec3 lightDir = normalize(vec3(1,0,1));
-    float dotProduct = max(0.25, dot(lightDir, normal));
-    vColor = vec4(dotProduct *uColor.rgb, 1);
+    // vColor = color;
+    vec3 lightdir = normalize(vec3(1,0,1));
+    float dotp = max(0.25,dot(lightdir,normal));
+    vColor = vec4(dotp*uColor.rgb,1);
     gl_Position = uProjection * uView * uModel * vec4(position, 1);
 }
 `;

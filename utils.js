@@ -46,6 +46,23 @@ function createBuffer(gl, type, data) {
     return buffer;
 }
 
+function createBuffer(gl, type, data) {
+
+    if(data.length == 0)
+        return null;
+
+    if(!isAbv(data)) {
+        console.warn('Data is not an instance of ArrayBuffer');
+        return null;
+    }
+
+    var buffer = gl.createBuffer();
+    gl.bindBuffer(type, buffer);
+    gl.bufferData(type, data, gl.STATIC_DRAW);
+
+    return buffer;
+}
+
 function createVAO(gl, posAttribLoc, posBuffer, normAttribLoc = null, normBuffer = null, colorAttribLoc = null, colorBuffer = null) {
 
     var vao = gl.createVertexArray();

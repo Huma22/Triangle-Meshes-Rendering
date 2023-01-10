@@ -10,7 +10,6 @@ var modelMatrix;
 var projectionMatrix;
 var viewMatrix;
 
-
 var currRotate = 0;
 var currZoom = 0;
 var currProj = 'perspective';
@@ -19,17 +18,17 @@ var currProj = 'perspective';
     Vertex shader with normals
 */
 class BuildingProgram {
-
     constructor() {
         this.vertexShader = createShader(gl, gl.VERTEX_SHADER, buildingShaderSrc);
         this.fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSrc);
         this.program = createProgram(gl, this.vertexShader, this.fragmentShader);
+
         this.posAttribLoc = gl.getAttribLocation(this.program, "position");
-        this.normAttribLoc = gl.getAttribLocation(this.program, "normal");
-        this.modelLoc = gl.getUniformLocation(this.program, 'uModel');
-        this.projLoc = gl.getUniformLocation(this.program, 'uProjection');
-        this.viewLoc = gl.getUniformLocation(this.program, 'uView');
-        this.colorLoc = gl.getUniformLocation(this.program, 'uColor');
+        this.normalAttribLoc = gl.getAttribLocation(this.program, "normal");
+        this.colorAttribLoc = gl.getUniformLocation(this.program, "uColor");
+        this.modelLoc = gl.getUniformLocation(this.program, "uModel");
+        this.projectionLoc = gl.getUniformLocation(this.program, "uProjection");
+        this.viewLoc = gl.getUniformLocation(this.program, "uView");
     }
 
     use() {
@@ -41,16 +40,16 @@ class BuildingProgram {
     Vertex shader with uniform colors
 */
 class FlatProgram {
-
     constructor() {
         this.vertexShader = createShader(gl, gl.VERTEX_SHADER, flatShaderSrc);
         this.fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSrc);
         this.program = createProgram(gl, this.vertexShader, this.fragmentShader);
+
         this.posAttribLoc = gl.getAttribLocation(this.program, "position");
-        this.modelLoc = gl.getUniformLocation(this.program, 'uModel');
-        this.projLoc = gl.getUniformLocation(this.program, 'uProjection');
-        this.viewLoc = gl.getUniformLocation(this.program, 'uView');
-        this.colorLoc = gl.getUniformLocation(this.program, 'uColor');
+        this.colorAttribLoc = gl.getUniformLocation(this.program, "uColor");
+        this.modelLoc = gl.getUniformLocation(this.program, "uModel");
+        this.projectionLoc = gl.getUniformLocation(this.program, "uProjection");
+        this.viewLoc = gl.getUniformLocation(this.program, "uView");
     }
 
     use() {
@@ -124,48 +123,10 @@ class Layer {
 
     init() {
         this.program = new FlatProgram();
-        this.indexBuff = createBuffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indices));
-        this.vertexBuff = createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(this.vertices));
-        
-        this.vao = createVAO(gl, this.program.posAttribLoc, this.vertexBuff);
-    }
 
-    draw(centroid) {
-        
-        this.program.use();
-
-        updateModelMatrix(centroid);
-        gl.uniformMatrix4fv(this.program.modelLoc, false, new Float32Array(modelMatrix));   
-        updateProjectionMatrix();
-        gl.uniformMatrix4fv(this.program.projLoc, false, new Float32Array(projectionMatrix));  
-        updateViewMatrix(centroid);
-        gl.uniformMatrix4fv(this.program.viewLoc, false, new Float32Array(viewMatrix));
-        gl.uniform4fv(this.program.colorLoc, this.color);
-        gl.bindVertexArray(this.vao);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuff);
-
-        gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_INT, 0);
-        
-    }
-}
-
-/*
-    Layer with normals (building)
-*/
-class  BuildingLayer extends Layer {
-    constructor(vertices, indices, normals, color) {
-        super(vertices, indices, color);
-        this.normals = normals;
-    }
-
-    init() { 
-        this.program  = new BuildingProgram();
-
-        this.indexBuff = createBuffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indices));
-        this.normalBuff = createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(this.normals));
-        this.vertexBuff = createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(this.vertices));
-
-        this.vao = createVAO(gl, this.program.posAttribLoc, this.vertexBuff, this.program.normAttribLoc, this.normalBuff );
+        this.vertexBuffer = createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(this.vertices));
+        this.indexBuffer = createBuffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indices));
+        this.vao = createVAO(gl, this.program.posAttribLoc, this.vertexBuffer);
     }
 
     draw(centroid) {
@@ -173,14 +134,55 @@ class  BuildingLayer extends Layer {
 
         updateModelMatrix(centroid);
         gl.uniformMatrix4fv(this.program.modelLoc, false, new Float32Array(modelMatrix));
+    
         updateProjectionMatrix();
-        gl.uniformMatrix4fv(this.program.projLoc, false, new Float32Array(projectionMatrix));
+        gl.uniformMatrix4fv(this.program.projectionLoc, false, new Float32Array(projectionMatrix));
+    
         updateViewMatrix(centroid);
-        gl.uniformMatrix4fv(this.program.viewLoc, false, new Float32Array(viewMatrix)); 
-        gl.uniform4fv(this.program.colorLoc, this.color);
-        gl.bindVertexArray(this.vao);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuff);
+        gl.uniformMatrix4fv(this.program.viewLoc, false, new Float32Array(viewMatrix));
 
+        gl.uniform4fv(this.program.colorAttribLoc, this.color);
+
+        gl.bindVertexArray(this.vao);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+        gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_INT, 0);
+    }
+}
+
+/*
+    Layer with normals (building)
+*/
+class BuildingLayer extends Layer {
+    constructor(vertices, indices, normals, color) {
+        super(vertices, indices, color);
+        this.normals = normals;
+    }
+
+    init() {
+        this.program = new BuildingProgram();
+
+        this.vertexBuffer = createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(this.vertices));
+        this.normalBuffer = createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(this.normals));
+        this.indexBuffer = createBuffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indices));
+        this.vao = createVAO(gl, this.program.posAttribLoc, this.vertexBuffer, this.program.normalAttribLoc, this.normalBuffer);
+    }
+
+    draw(centroid) {
+        this.program.use();
+
+        updateModelMatrix(centroid);
+        gl.uniformMatrix4fv(this.program.modelLoc, false, new Float32Array(modelMatrix));
+    
+        updateProjectionMatrix();
+        gl.uniformMatrix4fv(this.program.projectionLoc, false, new Float32Array(projectionMatrix));
+    
+        updateViewMatrix(centroid);
+        gl.uniformMatrix4fv(this.program.viewLoc, false, new Float32Array(viewMatrix));
+
+        gl.uniform4fv(this.program.colorAttribLoc, this.color);
+
+        gl.bindVertexArray(this.vao);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
         gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_INT, 0);
     }
 }
@@ -203,7 +205,6 @@ window.updateProjection = function() {
 /*
     File handler
 */
-
 window.handleFile = function(e) {
     var reader = new FileReader();
     reader.onload = function(evt) {
@@ -211,18 +212,17 @@ window.handleFile = function(e) {
         for(var layer in parsed){
             var aux = parsed[layer];
             switch (layer) {
-                // TODO: add to layers
                 case 'buildings':
                     layers.addBuildingLayer('buildings', aux['coordinates'], aux['indices'], aux['normals'], aux['color']);
                     break;
                 case 'water':
-                    layers.addLayer('water', aux['coordinates'], aux['indices'],  aux['color']);
+                    layers.addLayer('water', aux['coordinates'], aux['indices'], aux['color']);
                     break;
                 case 'parks':
-                    layers.addLayer('parks', aux['coordinates'], aux['indices'],  aux['color']);
+                    layers.addLayer('parks', aux['coordinates'], aux['indices'], aux['color']);
                     break;
                 case 'surface':
-                    layers.addLayer('surface', aux['coordinates'], aux['indices'],  aux['color']);
+                    layers.addLayer('surface', aux['coordinates'], aux['indices'], aux['color']);
                     break;
                 default:
                     break;
@@ -231,36 +231,43 @@ window.handleFile = function(e) {
     }
     reader.readAsText(e.files[0]);
 }
+
 /*
     Update transformation matrices
 */
-function updateModelMatrix(centroid) {
-    
-    var pos1 = translateMatrix(-centroid[0], -centroid[1], -centroid[2]);
-    var pos2 = translateMatrix(centroid[0], centroid[1], centroid[2]);
-
-    var rotate = rotateZMatrix(currRotate*Math.PI/180.0);
-    modelMatrix = multiplyArrayOfMatrices([
-        pos2, rotate, pos1
-    ])
-}
 
 function updateProjectionMatrix() {
-    var aspect = window.innerWidth / window.innerHeight;
-    if (currProj == 'perspective'){
-        projectionMatrix = perspectiveMatrix(45.0 * Math.PI / 180.0, aspect, 1, 50000);
-    }else{
-        var maxZoom = 5000;
-        var zoom = maxZoom - (currZoom/100)*maxZoom*0.99;
-        projectionMatrix = orthographicMatrix(-aspect*zoom, aspect*zoom, -zoom, zoom, -1, 50000);
+
+    var aspect = window.innerWidth /  window.innerHeight;
+    if(currProj == 'perspective') {
+        projectionMatrix = perspectiveMatrix(45 * Math.PI / 180.0, aspect, 1, 50000);
     }
-    
+    else {
+        var maxzoom = 5000;
+        var size = maxzoom-(currZoom/100.0)*maxzoom*0.99;
+        projectionMatrix = orthographicMatrix(-aspect*size, aspect*size, -1*size, 1*size, -1, 50000);
+    }
 }
 
-function updateViewMatrix(centroid) {
-    var maxZoom = 5000;
-    var zoom = maxZoom - (currZoom/100.0)*maxZoom*0.99;
-    viewMatrix = lookAt(add(centroid, [zoom, zoom, zoom]), centroid, [0, 0, 1]);
+// Option 1: Rotating the model
+function updateModelMatrix(centroid) {
+
+    var translation1 = translateMatrix(-centroid[0], -centroid[1], -centroid[2]);
+    var translation2 = translateMatrix(centroid[0], centroid[1], centroid[2]);
+
+    var rotate = rotateZMatrix(currRotate * Math.PI / 180.0);
+    modelMatrix = multiplyArrayOfMatrices([
+        translation2,
+        rotate,
+        translation1
+    ]);
+}
+
+function updateViewMatrix(centroid){
+    var maxzoom = 5000;
+    var zoom = maxzoom - (currZoom/100.0)*maxzoom*0.99;
+    var lookat = lookAt(add(centroid, [zoom,zoom,zoom]), centroid, [0,0,1]);
+    viewMatrix = lookat;
 }
 
 /*
@@ -278,6 +285,7 @@ function draw() {
     requestAnimationFrame(draw);
 
 }
+
 /*
     Initialize everything
 */
